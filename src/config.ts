@@ -7,6 +7,7 @@ if (process.env.NODE_ENV !== "production") {
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
+  DATABASE_URL: z.string().min(1),
 });
 
 export const config = envSchema.parse(process.env);
