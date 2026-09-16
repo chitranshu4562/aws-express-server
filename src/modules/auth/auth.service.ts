@@ -3,6 +3,7 @@ import { UnauthorizedError } from "../../errors/app-error.ts";
 import { signToken } from "../../lib/jwt.ts";
 import { prisma } from "../../lib/prisma.ts";
 import type { LoginInput } from "./auth.schema.ts";
+import { refreshTokenService } from "./refresh-token.service.ts";
 
 // Compared against when the email is unknown, so response time doesn't reveal which emails exist.
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 10);
@@ -16,7 +17,15 @@ export const authService = {
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    return { accessToken: signToken(user.id), tokenType: "Bearer" };
+    return {
+      accessToken: signToken(user.id),
+      refreshToken: await refreshTokenService.create(user.id),
+    };
+  },
+
+  async refresh(token: string) {
+    const { userId, refreshToken } = await refreshTokenService.rotate(token);
+    return { accessToken: signToken(userId), refreshToken };
   },
 
   async getCurrentUser(userId: string) {

@@ -7,6 +7,7 @@ import { loginSchema } from "./auth.schema.ts";
 const router = Router();
 
 router.post("/login", validateBody(loginSchema), authController.login);
+router.post("/refresh", authController.refresh);
 router.get("/me", authenticate, authController.me);
 
 export default router;

@@ -3,8 +3,13 @@ import request from "supertest";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-const findUnique = vi.hoisted(() => vi.fn());
-vi.mock("../../../lib/prisma.ts", () => ({ prisma: { user: { findUnique } } }));
+const { findUnique, createRefreshToken } = vi.hoisted(() => ({
+  findUnique: vi.fn(),
+  createRefreshToken: vi.fn(),
+}));
+vi.mock("../../../lib/prisma.ts", () => ({
+  prisma: { user: { findUnique }, refreshToken: { create: createRefreshToken } },
+}));
 
 const { app } = await import("../../../app.ts");
 const { signToken } = await import("../../../lib/jwt.ts");
@@ -15,10 +20,11 @@ const createdAt = new Date("2026-09-16T00:00:00Z");
 
 beforeEach(() => {
   findUnique.mockReset();
+  createRefreshToken.mockReset();
 });
 
 describe("POST /auth/login", () => {
-  it("returns a signed access token for valid credentials", async () => {
+  it("returns a signed access token and sets the refresh cookie for valid credentials", async () => {
     findUnique.mockResolvedValue({ id: "u1", email: "jane@example.com", passwordHash, createdAt });
 
     const res = await request(app)
@@ -29,6 +35,14 @@ describe("POST /auth/login", () => {
     expect(res.body.tokenType).toBe("Bearer");
     expect(jwt.verify(res.body.accessToken, SECRET)).toMatchObject({ sub: "u1" });
     expect(findUnique).toHaveBeenCalledWith({ where: { email: "jane@example.com" } });
+    expect(res.body).not.toHaveProperty("refreshToken");
+
+    const cookie = res.headers["set-cookie"]?.[0] ?? "";
+    expect(cookie).toMatch(/^refresh_token=[\w-]{43};/);
+    expect(cookie).toMatch(/; Path=\/auth;/);
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("SameSite=Strict");
+    expect(createRefreshToken.mock.calls[0][0].data).toMatchObject({ userId: "u1" });
   });
 
   it.each([
@@ -85,5 +99,14 @@ describe("GET /auth/me", () => {
     const res = await request(app).get("/auth/me").set("Authorization", `Bearer ${signToken("gone")}`);
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe("POST /auth/refresh", () => {
+  it("returns 401 when the refresh cookie is missing", async () => {
+    const res = await request(app).post("/auth/refresh");
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: "Missing refresh token" });
   });
 });

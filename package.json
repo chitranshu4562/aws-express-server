@@ -11,12 +11,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "prisma generate",
-    "migrate": "prisma migrate dev"
+    "migrate": "prisma migrate dev",
+    "test:unit": "vitest run --project unit",
+    "test:int": "vitest run --project int"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
@@ -25,7 +28,9 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "^12.1.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.20.3",
