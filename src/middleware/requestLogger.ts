@@ -7,7 +7,9 @@ export const requestLogger = pinoHttp<Request, Response>({
   serializers: {
     req: (req) => ({
       method: req.method,
-      url: req.url.split("?")[0],
+      url: req.url,
+      query: req.query,
+      body: req.raw.body,
     }),
     res: (res) => ({ statusCode: res.statusCode }),
   },
