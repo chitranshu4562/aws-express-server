@@ -37,7 +37,12 @@ Express 5 (ESM, `"type": "module"`), TypeScript, Prisma 7 with the `@prisma/adap
   - `POST /auth/logout` needs no access token, revokes the cookie's token family and always returns 204. `POST /auth/logout-all` needs an access token and revokes all of the user's refresh tokens. Access tokens already issued stay valid until they expire.
   - The `authenticate` middleware sets `req.user = { id }`; its type is declared in `src/types/express.d.ts`. Protect a route with `router.get(path, authenticate, handler)`.
   - Login returns the same 401 for an unknown email and a wrong password, and compares against a dummy hash to keep timing equal.
-- Routes are mounted in `src/routes/index.ts` (`/health`, `/users`, `/auth`).
+- **Multi-tenancy:** `organizations` and `organization_members` (with a Postgres enum `member_role`: owner > admin > member). The organization is always taken from the URL (`/orgs/:orgId/...`).
+  - Put `requireOrgRole(minRole)` (`src/modules/organizations/require-org-role.ts`) after `authenticate`. It reads the membership from the database on every request, so role changes apply immediately. It sets `req.membership`.
+  - Non-members get **404**, so outsiders can't tell whether an org exists. Members whose role is too low get 403.
+  - Handlers must scope queries with `req.membership.organizationId`.
+- Known Prisma errors are detected with `src/lib/prisma-errors.ts` (`isUniqueViolation` → `ConflictError`, `isRecordNotFound` → `NotFoundError`).
+- Routes are mounted in `src/routes/index.ts` (`/health`, `/users`, `/auth`, `/orgs`).
 
 ## Conventions
 
@@ -45,5 +50,5 @@ Express 5 (ESM, `"type": "module"`), TypeScript, Prisma 7 with the `@prisma/adap
 - **Database naming:** tables are plural snake_case and columns are snake_case. Prisma models keep camelCase fields and use `@map` / `@@map`. Migration names describe the change (e.g. `create_users_table`).
 - **Tests:** they live in `__tests__/` next to the code and exercise routes through supertest. `vitest.config.ts` defines two projects, `unit` and `int`.
   - **Unit** (`*.test.ts`): Prisma is mocked with `vi.hoisted` + `vi.mock("…/lib/prisma.ts")`, then the app is loaded with `await import(".../app.ts")` after the mock is set up.
-  - **Integration** (`*.int.test.ts`): `src/test/int-global-setup.ts` starts one Postgres container and runs `prisma migrate deploy` on it. `src/test/int-setup.ts` points `DATABASE_URL` at it (via `inject`) and runs `TRUNCATE users CASCADE` before each test. These files run one at a time. Shared helpers (`signupAndLogin`, `refresh`, `logout`, …) live in `src/test/auth-helpers.ts`. Use them for anything that depends on transactions, constraints or concurrency.
+  - **Integration** (`*.int.test.ts`): `src/test/int-global-setup.ts` starts one Postgres container and runs `prisma migrate deploy` on it. `src/test/int-setup.ts` points `DATABASE_URL` at it (via `inject`) and runs `TRUNCATE users, organizations CASCADE` before each test. Add any new top-level table to this statement. These files run one at a time. Shared helpers (`signupAndLogin`, `refresh`, `logout`, …) live in `src/test/auth-helpers.ts`. Use them for anything that depends on transactions, constraints or concurrency.
   - `vitest.config.ts` sets test values for `JWT_SECRET`, `DATABASE_URL` (a dummy for unit tests) and `LOG_LEVEL=silent`. Run `LOG_LEVEL=debug npm test` to see request logs.

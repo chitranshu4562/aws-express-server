@@ -6,8 +6,8 @@ process.env.DATABASE_URL = inject("databaseUrl");
 const { prisma } = await import("../lib/prisma.ts");
 
 beforeEach(async () => {
-  // Cascades to every table that references users.
-  await prisma.$executeRawUnsafe("TRUNCATE TABLE users CASCADE");
+  // CASCADE also empties every table that references these.
+  await prisma.$executeRawUnsafe("TRUNCATE TABLE users, organizations CASCADE");
 });
 
 afterAll(async () => {

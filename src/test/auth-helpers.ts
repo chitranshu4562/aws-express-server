@@ -5,6 +5,7 @@ export type Credentials = { email: string; password: string };
 
 export const jane: Credentials = { email: "jane@example.com", password: "s3cretpass" };
 export const john: Credentials = { email: "john@example.com", password: "s3cretpass" };
+export const mia: Credentials = { email: "mia@example.com", password: "s3cretpass" };
 
 export const refreshTokenFrom = (res: request.Response) => {
   const token = /^refresh_token=([^;]+)/.exec(res.headers["set-cookie"]?.[0] ?? "")?.[1];
