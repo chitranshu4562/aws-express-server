@@ -3,26 +3,11 @@ import request from "supertest";
 import { app } from "../../../app.ts";
 import { prisma } from "../../../lib/prisma.ts";
 import { hashToken } from "../../../lib/tokens.ts";
+import * as auth from "../../../test/auth-helpers.ts";
+import { jane, refresh, refreshTokenFrom } from "../../../test/auth-helpers.ts";
 
-const credentials = { email: "jane@example.com", password: "s3cretpass" };
-
-const refreshTokenFrom = (res: request.Response) => {
-  const cookie = res.headers["set-cookie"]?.[0] ?? "";
-  const token = /^refresh_token=([^;]+)/.exec(cookie)?.[1];
-  if (!token) throw new Error("No refresh_token cookie in response");
-  return token;
-};
-
-const signupAndLogin = async () => {
-  await request(app).post("/users/signup").send(credentials).expect(201);
-  const res = await request(app).post("/auth/login").send(credentials).expect(200);
-  return refreshTokenFrom(res);
-};
-
-const login = async () => refreshTokenFrom(await request(app).post("/auth/login").send(credentials).expect(200));
-
-const refresh = (token: string) =>
-  request(app).post("/auth/refresh").set("Cookie", `refresh_token=${token}`);
+const signupAndLogin = async () => (await auth.signupAndLogin(jane)).refreshToken;
+const login = async () => (await auth.login(jane)).refreshToken;
 
 const rowFor = (token: string) =>
   prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashToken(token) } });
@@ -124,7 +109,7 @@ describe("refresh token rotation", () => {
   it("deletes a user's refresh tokens when the user is deleted", async () => {
     const token = await signupAndLogin();
 
-    await prisma.user.delete({ where: { email: credentials.email } });
+    await prisma.user.delete({ where: { email: jane.email } });
 
     expect(await prisma.refreshToken.count()).toBe(0);
     await refresh(token).expect(401);

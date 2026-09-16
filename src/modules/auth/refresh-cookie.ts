@@ -16,6 +16,12 @@ export const setRefreshCookie = (res: Response, token: string) => {
   res.cookie(REFRESH_COOKIE, token, cookieOptions);
 };
 
+export const clearRefreshCookie = (res: Response) => {
+  // The browser only removes the cookie if name, path and flags match the ones it was set with.
+  const { maxAge: _maxAge, ...clearOptions } = cookieOptions;
+  res.clearCookie(REFRESH_COOKIE, clearOptions);
+};
+
 export const readRefreshCookie = (req: Request): string | undefined => {
   const token: unknown = req.cookies?.[REFRESH_COOKIE];
   return typeof token === "string" && token.length > 0 ? token : undefined;

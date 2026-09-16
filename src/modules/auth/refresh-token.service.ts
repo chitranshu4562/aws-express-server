@@ -59,4 +59,22 @@ export const refreshTokenService = {
 
     return { userId: existing.userId, refreshToken: newToken };
   },
+
+  // Logs out the session (login family) the token belongs to. Unknown tokens are ignored.
+  async revokeSession(token: string) {
+    const existing = await prisma.refreshToken.findUnique({
+      where: { tokenHash: hashToken(token) },
+      select: { familyId: true },
+    });
+    if (existing) {
+      await revokeFamily(existing.familyId);
+    }
+  },
+
+  async revokeAllForUser(userId: string) {
+    await prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  },
 };

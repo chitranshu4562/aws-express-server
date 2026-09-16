@@ -28,6 +28,14 @@ export const authService = {
     return { accessToken: signToken(userId), refreshToken };
   },
 
+  logout(refreshToken: string) {
+    return refreshTokenService.revokeSession(refreshToken);
+  },
+
+  logoutAll(userId: string) {
+    return refreshTokenService.revokeAllForUser(userId);
+  },
+
   async getCurrentUser(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },

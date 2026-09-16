@@ -110,3 +110,20 @@ describe("POST /auth/refresh", () => {
     expect(res.body).toEqual({ error: "Missing refresh token" });
   });
 });
+
+describe("POST /auth/logout", () => {
+  it("returns 204 and clears the cookie even without a refresh cookie", async () => {
+    const res = await request(app).post("/auth/logout");
+
+    expect(res.status).toBe(204);
+    expect(res.headers["set-cookie"]?.[0]).toMatch(/^refresh_token=; Path=\/auth; Expires=Thu, 01 Jan 1970/);
+  });
+});
+
+describe("POST /auth/logout-all", () => {
+  it("returns 401 without an access token", async () => {
+    const res = await request(app).post("/auth/logout-all");
+
+    expect(res.status).toBe(401);
+  });
+});
