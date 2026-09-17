@@ -9,7 +9,7 @@ export const requestLogger = pinoHttp<Request, Response>({
       method: req.method,
       url: req.url,
       query: req.query,
-      body: req.raw.body,
+      // Request body is not logged: it can contain passwords and tokens
     }),
     res: (res) => ({ statusCode: res.statusCode }),
   },
