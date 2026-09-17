@@ -1,8 +1,9 @@
 import type { Server } from "node:http";
+import { isProduction } from "../config.ts";
 import { logger } from "../logger.ts";
 
 // In production, wait before closing so the load balancer sees /ready return 503
-const DRAIN_DELAY_MS = process.env.NODE_ENV === "production" ? 5_000 : 0;
+const DRAIN_DELAY_MS = isProduction ? 5_000 : 0;
 
 let shuttingDown = false;
 

@@ -1,9 +1,8 @@
 import pino from "pino";
-
-const isProduction = process.env.NODE_ENV === "production";
+import { config, isProduction } from "./config.ts";
 
 export const logger = pino({
-  level: process.env.LOG_LEVEL || (isProduction ? "info" : "debug"),
+  level: config.LOG_LEVEL ?? (isProduction ? "info" : "debug"),
   transport: isProduction
     ? undefined
     : { target: "pino-pretty", options: { colorize: true } },
