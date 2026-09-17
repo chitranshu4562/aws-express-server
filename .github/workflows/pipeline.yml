@@ -1,10 +1,8 @@
 name: Pipeline
 
+# Runs on every push to main: a direct push or a merged pull request
 on:
-  # Every push, on any branch
   push:
-  # Every pull request targeting main
-  pull_request:
     branches: [main]
 
 jobs:
