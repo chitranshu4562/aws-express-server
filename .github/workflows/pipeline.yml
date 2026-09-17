@@ -1,0 +1,32 @@
+name: Pipeline
+
+# Runs on every push to main: a direct push or a merged pull request
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      # Exact install from package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+  docker:
+    # Only runs if "check" passed
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Proves the image builds; it is not pushed anywhere yet
+      - run: docker build -t express-server:ci .
