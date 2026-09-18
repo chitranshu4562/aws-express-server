@@ -1,5 +1,6 @@
 import type { Server } from "node:http";
 import { isProduction } from "../config.ts";
+import { prisma } from "../db/prisma.ts";
 import { logger } from "../logger.ts";
 
 // In production, wait before closing so the load balancer sees /ready return 503
@@ -19,7 +20,8 @@ export function registerShutdown(server: Server) {
 
     setTimeout(() => {
       // Stop accepting new requests, wait for current ones to finish
-      server.close(() => {
+      server.close(async () => {
+        await prisma.$disconnect();
         logger.info("Shutdown complete");
         process.exit(0);
       });

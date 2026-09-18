@@ -8,6 +8,7 @@ if (process.env.NODE_ENV !== "production") {
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
+  DATABASE_URL: z.string().min(1),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).optional(),
   // Number of proxies in front of the app (1 behind an AWS load balancer)
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
