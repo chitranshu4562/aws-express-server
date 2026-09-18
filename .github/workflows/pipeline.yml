@@ -70,13 +70,18 @@ jobs:
 
           SCRIPT=$(cat <<EOF
           set -e
+          DB_URL=\$(aws ssm get-parameter --name /express-server/DATABASE_URL --with-decryption --query Parameter.Value --output text --region ${{ vars.AWS_REGION }})
           aws ecr get-login-password --region ${{ vars.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY
           docker pull $IMAGE
+          # Apply pending migrations before the new code starts using the database
+          docker run --rm -e DATABASE_URL="\$DB_URL" $IMAGE npx prisma migrate deploy
           docker rm -f api || true
-          docker run -d --name api --restart unless-stopped -p 127.0.0.1:3000:3000 -e TRUST_PROXY=1 $IMAGE
+          docker run -d --name api --restart unless-stopped -p 127.0.0.1:3000:3000 -e TRUST_PROXY=1 -e DATABASE_URL="\$DB_URL" $IMAGE
           sleep 3
           curl -fsS localhost/health
-          docker image prune -f
+          curl -fsS localhost/ready
+          # Free disk space: unused images older than a day (never one in use)
+          docker image prune -af --filter "until=24h"
           EOF
           )
 
