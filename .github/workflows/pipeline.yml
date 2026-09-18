@@ -21,6 +21,13 @@ jobs:
 
       # Exact install from package-lock.json
       - run: npm ci
+
+      # The generated Prisma client is gitignored, so build it before typechecking.
+      # Generating only reads the schema; this URL is never connected to.
+      - run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+
       - run: npm run typecheck
       - run: npm run build
 
