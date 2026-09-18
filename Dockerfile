@@ -6,6 +6,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# The app imports the generated Prisma client, so generate it before compiling
+COPY prisma ./prisma
+COPY prisma7.config.ts ./
+RUN npx prisma generate
+
 COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
@@ -20,6 +25,10 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
+
+# Schema and config stay in the image so "prisma migrate deploy" can run on deploy
+COPY prisma ./prisma
+COPY prisma7.config.ts ./
 
 # Don't run as root
 USER node
