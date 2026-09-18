@@ -11,11 +11,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "helmet": "^8.3.0",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
+    "prisma": "^7.10.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
