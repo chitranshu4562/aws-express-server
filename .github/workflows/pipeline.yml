@@ -83,7 +83,7 @@ jobs:
           # Apply pending migrations before the new code starts using the database
           docker run --rm -e DATABASE_URL="\$DB_URL" $IMAGE npx prisma migrate deploy
           docker rm -f api || true
-          docker run -d --name api --restart unless-stopped -p 127.0.0.1:3000:3000 -e TRUST_PROXY=1 -e DATABASE_URL="\$DB_URL" $IMAGE
+          docker run -d --name api --restart unless-stopped -p 127.0.0.1:3000:3000 -e TRUST_PROXY=1 -e DATABASE_URL="\$DB_URL" -e DATABASE_SSL=true $IMAGE
           sleep 3
           curl -fsS localhost/health
           curl -fsS localhost/ready
